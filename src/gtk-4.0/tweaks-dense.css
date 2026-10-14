@@ -1,0 +1,9 @@
+/* Hand-tuned exceptions for the dense preset (GTK4 / libadwaita).
+ * Halving every padding leaves some text-heavy widgets cramped
+ * horizontally; give them a little room back. Selectors mirror
+ * libadwaita's exactly so the upstream cascade is preserved. */
+
+headerbar > windowhandle > box { padding-left: 5px; padding-right: 5px; }
+spinbutton, entry { padding-left: 6px; padding-right: 6px; }
+menubar > item { padding: 2px 6px; }
+notebook > header > tabs > tab { padding: 1px 8px; }

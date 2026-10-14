@@ -1,0 +1,10 @@
+/* Hand-tuned exceptions for the dense preset (GTK3 / adw-gtk3).
+ * Halving every padding leaves some text-heavy widgets cramped
+ * horizontally; give them a little room back. Selectors mirror
+ * adw-gtk3's exactly so the upstream cascade is preserved. */
+
+.titlebar:not(headerbar), headerbar { padding: 0 5px; }
+spinbutton:not(.vertical), entry { padding-left: 6px; padding-right: 6px; }
+menubar > menuitem, .menubar > menuitem { padding: 2px 6px; }
+menu menuitem, .menu menuitem, .context-menu menuitem { padding: 2px 6px; }
+notebook > header tab { padding: 1px 8px; }

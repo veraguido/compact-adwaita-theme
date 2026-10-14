@@ -1,0 +1,17 @@
+/* Hand-tuned exceptions for the dense preset (GNOME Shell).
+ * Most of these sizes are in em in the stock stylesheet, which the generator
+ * only scales for padding, so they are set by hand. */
+
+#panel { height: 26px; }
+#panel .panel-button { -natural-hpadding: 10px; -minimum-hpadding: 7px; }
+.quick-toggle, .quick-toggle-has-menu { min-height: 2.6em; }
+.background-apps-quick-toggle { min-height: 2.2em; }
+.calendar .calendar-day { height: 2.4em; width: 2.4em; }
+.calendar .calendar-month-header .pager-button { height: 2.2em; width: 2.2em; }
+
+/* Halved padding leaves icons touching their round buttons / pill edges. */
+.quick-settings .icon-button, .quick-settings .button { padding: 7px; }
+.quick-toggle > StBoxLayout { padding: 0 8px; }
+.quick-toggle:ltr > StBoxLayout { padding-left: 11px; }
+.quick-toggle:rtl > StBoxLayout { padding-right: 11px; }
+.message-list-controls { padding: 8px; padding-bottom: 6px; }

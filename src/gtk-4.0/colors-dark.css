@@ -1,0 +1,56 @@
+/* ggtk dark palette for GTK4 / libadwaita.
+ * Neutral grays, a notch darker than Adwaita's dark variant.
+ * Only applies when the system (or app) prefers a dark color scheme.
+ * libadwaita reads the CSS variables; the @define-color names are kept
+ * in sync for the few rules and apps that still use them. */
+
+@media (prefers-color-scheme: dark) {
+  @define-color window_bg_color #1a1a1a;
+  @define-color view_bg_color #141414;
+  @define-color headerbar_bg_color #222222;
+  @define-color headerbar_backdrop_color #1a1a1a;
+  @define-color headerbar_shade_color rgb(0 0 0 / 45%);
+  @define-color headerbar_darker_shade_color rgb(0 0 0 / 90%);
+  @define-color sidebar_bg_color #202020;
+  @define-color sidebar_backdrop_color #1d1d1d;
+  @define-color sidebar_shade_color rgb(0 0 0 / 32%);
+  @define-color sidebar_border_color rgb(0 0 0 / 45%);
+  @define-color secondary_sidebar_bg_color #1d1d1d;
+  @define-color secondary_sidebar_backdrop_color #1b1b1b;
+  @define-color secondary_sidebar_shade_color rgb(0 0 0 / 32%);
+  @define-color secondary_sidebar_border_color rgb(0 0 0 / 45%);
+  @define-color card_bg_color rgb(255 255 255 / 7%);
+  @define-color card_shade_color rgb(0 0 0 / 45%);
+  @define-color dialog_bg_color #262626;
+  @define-color popover_bg_color #262626;
+  @define-color popover_shade_color rgb(0 0 0 / 32%);
+  @define-color thumbnail_bg_color #2a2a2a;
+  @define-color shade_color rgb(0 0 0 / 32%);
+  @define-color scrollbar_outline_color rgb(0 0 0 / 95%);
+
+  :root {
+    --window-bg-color: #1a1a1a;
+    --view-bg-color: #141414;
+    --headerbar-bg-color: #222222;
+    --headerbar-backdrop-color: #1a1a1a;
+    --headerbar-shade-color: rgb(0 0 0 / 45%);
+    --headerbar-darker-shade-color: rgb(0 0 0 / 90%);
+    --sidebar-bg-color: #202020;
+    --sidebar-backdrop-color: #1d1d1d;
+    --sidebar-shade-color: rgb(0 0 0 / 32%);
+    --sidebar-border-color: rgb(0 0 0 / 45%);
+    --secondary-sidebar-bg-color: #1d1d1d;
+    --secondary-sidebar-backdrop-color: #1b1b1b;
+    --secondary-sidebar-shade-color: rgb(0 0 0 / 32%);
+    --secondary-sidebar-border-color: rgb(0 0 0 / 45%);
+    --card-bg-color: rgb(255 255 255 / 7%);
+    --card-shade-color: rgb(0 0 0 / 45%);
+    --dialog-bg-color: #262626;
+    --popover-bg-color: #262626;
+    --popover-shade-color: rgb(0 0 0 / 32%);
+    --thumbnail-bg-color: #2a2a2a;
+    --shade-color: rgb(0 0 0 / 32%);
+    --scrollbar-outline-color: rgb(0 0 0 / 95%);
+    --overview-bg-color: #1d1d1d;
+  }
+}
