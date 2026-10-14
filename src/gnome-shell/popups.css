@@ -10,3 +10,11 @@
   background-color: #121212;
   border: 1px solid #1e1e1e;
 }
+
+/* Grouped notifications are stacked with a 10px strip of each card below
+ * the top one showing. With ggtk's tighter padding the last line of text
+ * would fall into that strip, so hide the text of the cards underneath. */
+.popup-menu-boxpointer .message:second-in-stack StLabel,
+.popup-menu-boxpointer .message:lower-in-stack StLabel,
+#notification-container .message:second-in-stack StLabel,
+#notification-container .message:lower-in-stack StLabel { color: transparent; }

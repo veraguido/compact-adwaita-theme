@@ -34,18 +34,37 @@ The light variant has only the padding changes.
 
 ## Screenshots
 
-| | Stock | ggtk |
-|---|---|---|
-| libadwaita (dark) | ![](docs/screenshots/libadwaita-stock-dark.png) | ![](docs/screenshots/libadwaita-ggtk-dark.png) |
-| GTK3 (dark) | ![](docs/screenshots/gtk3-adw-gtk3-dark.png) | ![](docs/screenshots/gtk3-ggtk-dark.png) |
-| Shell quick settings | ![](docs/screenshots/shell-stock-dark-quicksettings.png) | ![](docs/screenshots/shell-ggtk-dark-quicksettings.png) |
-| Shell calendar | ![](docs/screenshots/shell-stock-dark-datemenu.png) | ![](docs/screenshots/shell-ggtk-dark-datemenu.png) |
-| Shell, `ggtk` in light mode | | ![](docs/screenshots/shell-ggtk-light-quicksettings.png) |
-| Notification banner, `ggtk` in light mode | | ![](docs/screenshots/shell-ggtk-light-banner.png) |
+![ggtk dark desktop](docs/screenshots/dark/desktop-quicksettings.png)
 
-| libadwaita (light) | Menu |
+![ggtk light desktop](docs/screenshots/light/desktop-quicksettings.png)
+
+### Before and after
+
+| | Dark | Light |
+|---|---|---|
+| Files | ![](docs/screenshots/compare/files-dark.png) | ![](docs/screenshots/compare/files-light.png) |
+| Settings | ![](docs/screenshots/compare/settings-dark.png) | ![](docs/screenshots/compare/settings-light.png) |
+| Text Editor | ![](docs/screenshots/compare/text-editor-dark.png) | ![](docs/screenshots/compare/text-editor-light.png) |
+| GTK3 (legacy apps) | ![](docs/screenshots/compare/gtk3-widget-factory-dark.png) | ![](docs/screenshots/compare/gtk3-widget-factory-light.png) |
+| Quick settings | ![](docs/screenshots/compare/shell-quicksettings-dark.png) | ![](docs/screenshots/compare/shell-quicksettings-light.png) |
+| Calendar | ![](docs/screenshots/compare/shell-calendar-dark.png) | ![](docs/screenshots/compare/shell-calendar-light.png) |
+
+### More
+
+| Dark | Light |
 |---|---|
-| ![](docs/screenshots/libadwaita-ggtk-light.png) | ![](docs/screenshots/libadwaita-ggtk-dark-menu.png) |
+| ![](docs/screenshots/dark/app-files-context.png) | ![](docs/screenshots/light/app-files-context.png) |
+| ![](docs/screenshots/dark/app-text-editor-menu.png) | ![](docs/screenshots/light/app-text-editor-menu.png) |
+| ![](docs/screenshots/dark/app-settings-notifications.png) | ![](docs/screenshots/light/app-settings-notifications.png) |
+| ![](docs/screenshots/dark/app-adwaita-demo.png) | ![](docs/screenshots/light/app-adwaita-demo.png) |
+| ![](docs/screenshots/dark/app-characters.png) | ![](docs/screenshots/light/app-characters.png) |
+| ![](docs/screenshots/dark/shell-banner.png) | ![](docs/screenshots/light/shell-banner.png) |
+| ![](docs/screenshots/dark/shell-overview.png) | ![](docs/screenshots/light/shell-overview.png) |
+
+All screenshots are in [`docs/screenshots`](docs/screenshots): `dark/` and
+`light/` hold individual app and shell shots, and `compare/` holds labeled
+stock-vs-ggtk images. They were taken on GNOME 50 in a sandboxed session with
+demo files, using the default Adwaita wallpaper.
 
 ## Requirements
 
@@ -163,6 +182,20 @@ shouldn't shrink is copied verbatim: scrollbars, sliders, scales, progress
 bars, paned handles, shadows and OSD controls. Their corner radii are still
 scaled, so rounding stays consistent.
 
+The same priority rule means the override would also beat the stylesheets
+that apps ship themselves. For example, the round accent-color buttons in
+Settings would turn square. So `scripts/app-css.py` collects the stylesheets
+bundled in installed GTK4 apps (system and Flatpak). The generator mirrors
+their app-specific rules with a `:not(#ggtk-app)` specificity boost, so app
+styling keeps winning over the generic rules, as it does over the stock theme.
+Apps installed later are picked up on the next `./install.sh`.
+
+In dark mode the override also carries libadwaita's complete dark palette, not
+just ggtk's darker surfaces. GTK evaluates dark mode for `~/.config` styles
+from the system setting, but for the theme stylesheet only when an app asks
+for a dark theme. Without the full palette, plain GTK4 apps such as
+pavucontrol would get dark backgrounds with light-mode text.
+
 The same generator produces the compact layer for the GTK3 theme (from
 adw-gtk3) and for plain GTK4 apps.
 
@@ -191,6 +224,7 @@ src/gnome-shell/tweaks-dense.css  same, for the shell (top bar height, quick
                                settings, calendar)
 src/gnome-shell/popups.css     popup / notification background (#121212)
 scripts/compact.py             the generator
+scripts/app-css.py             collects installed apps' own stylesheets
 scripts/update-vendor.sh       refresh vendor/adw-gtk3 from a release
 vendor/adw-gtk3/               adw-gtk3 v6.5 release CSS + assets
 build.sh                       assembles build/themes/* and build/libadwaita/

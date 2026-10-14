@@ -80,6 +80,17 @@ compact "$VENDOR/gtk-4.0/libadwaita.css" "$VENDOR/gtk-4.0/libadwaita-tweaks.css"
 tweaks gtk-3.0 | tee -a "$OUT/tmp/gtk3-compact.css" >>"$OUT/tmp/gtk3-compact-dark.css"
 tweaks gtk-4.0 >>"$OUT/tmp/gtk4-compact.css"
 
+# Dark palette for GTK4: libadwaita's own dark color definitions, then ggtk's
+# darker surfaces. The full set matters for plain GTK4 apps (e.g. pavucontrol):
+# GTK evaluates dark mode for ~/.config/gtk-4.0/gtk.css from the system color
+# scheme, but for the theme stylesheet only when an app asks for a dark theme.
+# Without the full set they'd get dark backgrounds with light-mode text.
+dark_palette() {
+    python3 -I "$ROOT/scripts/compact.py" --dark-defs "$1"
+    cat "$SRC/gtk-4.0/colors-dark.css"
+}
+dark_palette "$VENDOR/gtk-4.0/libadwaita.css" >"$OUT/tmp/gtk4-colors-dark.css"
+
 make_theme() {
     local theme="$1" variant="$2" dir="$OUT/themes/$1"
     mkdir -p "$dir/gtk-3.0" "$dir/gtk-4.0"
@@ -116,7 +127,7 @@ EOF
     cp -r "$VENDOR/gtk-4.0/assets" "$g4/"
     cp "$VENDOR/gtk-4.0/libadwaita.css" "$VENDOR/gtk-4.0/libadwaita-tweaks.css" "$g4/"
     cp "$OUT/tmp/gtk4-compact.css" "$g4/compact.css"
-    cp "$SRC/gtk-4.0/colors-dark.css" "$g4/colors-dark.css"
+    cp "$OUT/tmp/gtk4-colors-dark.css" "$g4/colors-dark.css"
     printf '@import url("libadwaita.css");\n@import url("libadwaita-tweaks.css");\n@import url("compact.css");\n@import url("colors-dark.css");\n' \
         >"$g4/gtk.css"
     cp "$g4/gtk.css" "$g4/gtk-dark.css"
@@ -129,11 +140,23 @@ make_theme "$NAME-dark" dark
 
 source_desc="$(find_libadwaita_css "$OUT/tmp/libadwaita.css")"
 compact "$OUT/tmp/libadwaita.css" -o "$OUT/tmp/libadwaita-compact.css"
+app_sheets=""
+if command -v gresource >/dev/null; then
+    app_sheets="$(python3 -I "$ROOT/scripts/app-css.py" "$OUT/tmp/app-css")"
+    [[ "$app_sheets" == 0 ]] && app_sheets=""
+fi
 tweaks gtk-4.0 >>"$OUT/tmp/libadwaita-compact.css"
 {
     echo "/* ggtk override for libadwaita apps (density: $DENSITY)"
     echo " * generated from: $source_desc */"
-    cat "$OUT/tmp/libadwaita-compact.css" "$SRC/gtk-4.0/colors-dark.css"
+    cat "$OUT/tmp/libadwaita-compact.css"
+    # Installed apps' own stylesheets, mirrored with a specificity boost so
+    # they keep beating the generic rules above (see scripts/app-css.py).
+    if [[ -n "$app_sheets" ]]; then
+        echo "/* app stylesheets ($app_sheets found) */"
+        compact --app "$OUT/tmp/libadwaita.css" "$OUT/tmp/app-css"/*
+    fi
+    dark_palette "$OUT/tmp/libadwaita.css"
 } >"$OUT/libadwaita/$NAME.css"
 
 # --- GNOME Shell --------------------------------------------------------------
@@ -182,4 +205,5 @@ rm -rf "$OUT/tmp"
 
 echo "Built $NAME and $NAME-dark (density: $DENSITY)"
 echo "  libadwaita stylesheet: $source_desc"
+echo "  app stylesheets mirrored: ${app_sheets:-0}"
 echo "  GNOME Shell stylesheet: $shell_desc"

@@ -182,6 +182,21 @@ def transform_decl(prop, value, selector, s, geometry=True):
 TRACKED = PAD_PROPS | SIZE_PROPS | RADIUS_PROPS
 
 
+# --app mode: only rules that target an app's own widgets are mirrored, and
+# they get a specificity boost so they beat the mirrored toolkit rules, the way
+# app stylesheets beat the theme through their higher priority.
+APP_KNOWN = None
+APP_BOOST = ":not(#ggtk-app)"
+CLASS = re.compile(r"\.([A-Za-z_][\w-]*)")
+
+
+def app_selector(sel):
+    """Boosted selector if `sel` targets app-specific widgets, else None."""
+    if "#" not in sel and not (set(CLASS.findall(sel)) - APP_KNOWN):
+        return None
+    return sel + APP_BOOST
+
+
 def transform_rule(selector, body, s):
     """Return the rule(s) mirroring `selector` for every tracked property.
 
@@ -201,6 +216,10 @@ def transform_rule(selector, body, s):
         return []
 
     selectors = [x.strip() for x in split_top(selector, ",")]
+    if APP_KNOWN is not None:
+        selectors = [y for y in map(app_selector, selectors) if y]
+        if not selectors:
+            return []
     keep = [x for x in selectors if EXCLUDE.search(x)]
     scale = [x for x in selectors if not EXCLUDE.search(x)]
     out = []
@@ -299,6 +318,22 @@ def emit_scoped(items, scopes, outside, darken, offset):
     return out
 
 
+def emit_dark_defs(items):
+    """The global color definitions of the stylesheet's dark variant: the
+    @define-color statements and :root variables inside its
+    @media (prefers-color-scheme: dark) blocks."""
+    out = []
+    for item in items:
+        if item[0] == "block" and "prefers-color-scheme: dark" in item[1]:
+            for sub in item[2]:
+                if sub[0] == "stmt" and sub[1].startswith("@define-color"):
+                    out.append("  " + sub[1])
+                elif sub[0] == "rule" and sub[1] == ":root":
+                    decls = " ".join(f"{p}: {v};" for p, v in split_decls(sub[2]))
+                    out.append(f"  :root {{ {decls} }}")
+    return ["@media (prefers-color-scheme: dark) {", *out, "}"] if out else []
+
+
 def emit(items, s):
     out = []
     for item in items:
@@ -332,6 +367,11 @@ def main():
                     help="multiply neutral dark grays by this factor")
     ap.add_argument("--gray-offset", type=int, default=0,
                     help="with --darken-grays: then add this to each gray")
+    ap.add_argument("--app", metavar="TOOLKIT_CSS",
+                    help="mirror app stylesheets: keep only rules with classes "
+                         "not defined in TOOLKIT_CSS, with a specificity boost")
+    ap.add_argument("--dark-defs", action="store_true",
+                    help="emit only the dark variant's global color definitions")
     ap.add_argument("--scope", action="append", default=[],
                     help="emit color properties under this ancestor (repeatable)")
     ap.add_argument("--outside", default=r"(?!x)x",
@@ -339,7 +379,10 @@ def main():
                          "inside the scopes (skipped)")
     args = ap.parse_args()
 
-    global EXCLUDE
+    global EXCLUDE, APP_KNOWN
+    if args.app:
+        with open(args.app, encoding="utf-8") as f:
+            APP_KNOWN = set(CLASS.findall(f.read()))
     if args.exclude:
         EXCLUDE = re.compile("|".join([EXCLUDE.pattern, *args.exclude]))
 
@@ -349,7 +392,9 @@ def main():
         with open(path, encoding="utf-8") as f:
             css = re.sub(r"/\*.*?\*/", "", f.read(), flags=re.S)
         items, _ = parse(css)
-        if args.scope:
+        if args.dark_defs:
+            rules = emit_dark_defs(items)
+        elif args.scope:
             rules = emit_scoped(items, args.scope, re.compile(args.outside),
                                 args.darken_grays, args.gray_offset)
         elif args.full:
