@@ -154,6 +154,11 @@ if command -v gresource >/dev/null && [[ -e "$SHELL_RES" ]] \
     # Things whose size is geometry, not padding.
     shell_exclude=(--exclude '(?<![\w-])switch(?![\w-])|toggle-switch|ripple|workspace-thumbnail|window-clone|pie-timer'
                    --exclude 'keyboard|\.key\b|osk|slider')
+    # Color layer for popups/banners, generated from the stock dark stylesheet
+    # with the grays shifted so the popup background lands on #121212.
+    popup_scope=(--scope .popup-menu-boxpointer --scope '#notification-container'
+                 --darken-grays 0.75 --gray-offset -23
+                 --outside '#panel|login|unlock|overview|dash|workspace|app-grid|app-folder|\.osd|screenshot|Looking|\.lg-|switcher|keyboard|\.key\b|osk|-dialog|search|window-|ripple|pie-timer|lockDialog|candidate|page-indicator|page-navigation|edge-drag')
     make_shell() {
         local src="$1" theme="$2"; shift 2
         mkdir -p "$OUT/themes/$theme/gnome-shell"
@@ -163,6 +168,9 @@ if command -v gresource >/dev/null && [[ -e "$SHELL_RES" ]] \
             echo " * Re-run ./install.sh after upgrading GNOME Shell. */"
             compact "${shell_exclude[@]}" "$@" "$src"
             tweaks gnome-shell
+            # Dark popups and notifications in both variants (see popups.css)
+            python3 -I "$ROOT/scripts/compact.py" "${popup_scope[@]}" "$OUT/tmp/shell-dark.css"
+            cat "$SRC/gnome-shell/popups.css"
         } >"$OUT/themes/$theme/gnome-shell/gnome-shell.css"
     }
     make_shell "$OUT/tmp/shell-light.css" "$NAME"

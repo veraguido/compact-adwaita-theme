@@ -14,8 +14,12 @@ each special case gets its own scaled copy, so the upstream cascade is kept.
 Every rule that sets one of those properties is mirrored, even when its
 values stay the same (see transform_rule).
 
-With --full the whole stylesheet is re-emitted instead (used for GNOME Shell,
-where a theme replaces the stock stylesheet rather than layering on top).
+With --full the whole stylesheet is re-emitted instead (the always-dark
+GNOME Shell theme).
+
+With --scope the color properties of the stylesheet are re-emitted under the
+given ancestor selector(s) instead (used to give GNOME Shell popups and
+notifications the dark styling while the rest of the shell stays light).
 """
 
 import argparse
@@ -87,8 +91,9 @@ class Scaler:
         return round(v * self.pad, 3)
 
 
-def darken_grays(value, factor):
-    """Turn near-neutral dark/mid grays into darker, fully neutral grays."""
+def darken_grays(value, factor, offset=0):
+    """Turn near-neutral dark/mid grays into darker, fully neutral grays,
+    optionally shifted by a constant `offset` afterwards."""
     def sub(m):
         h = m.group(1)
         if len(h) == 3:
@@ -97,7 +102,7 @@ def darken_grays(value, factor):
         avg = sum(rgb) / 3
         if max(rgb) - min(rgb) > 8 or not 20 <= avg <= 110:
             return m.group(0)
-        return "#{0:02x}{0:02x}{0:02x}".format(round(avg * factor))
+        return "#{0:02x}{0:02x}{0:02x}".format(max(0, round(avg * factor) + offset))
     return HEX.sub(sub, value)
 
 
@@ -252,6 +257,48 @@ def emit_full(items, s, darken):
     return out
 
 
+COLOR_PROP = re.compile(
+    r"color|^background(-image)?$|^border(-(top|right|bottom|left))?$|shadow"
+)
+
+
+def scoped_rule(selector, body, scopes, outside, darken, offset):
+    """Re-emit the color properties of a rule under each ancestor in `scopes`."""
+    decls = []
+    for p, v in split_decls(body):
+        if COLOR_PROP.search(p):
+            if darken:
+                v = darken_grays(v, darken, offset)
+            decls.append(f"{p}: {v};")
+    if not decls:
+        return []
+    sels = []
+    for x in (y.strip() for y in split_top(selector, ",")):
+        if outside.search(x):
+            continue
+        if x == "stage":  # inherited base text color
+            sels.extend(scopes)
+        elif any(sc in x for sc in scopes):
+            sels.append(x)
+        else:
+            sels.extend(f"{sc} {x}" for sc in scopes)
+    if not sels:
+        return []
+    return [f"{', '.join(sels)} {{ {' '.join(decls)} }}"]
+
+
+def emit_scoped(items, scopes, outside, darken, offset):
+    out = []
+    for item in items:
+        if item[0] == "rule":
+            out.extend(scoped_rule(item[1], item[2], scopes, outside, darken, offset))
+        elif item[0] == "block" and item[1].startswith(("@media", "@supports")):
+            inner = emit_scoped(item[2], scopes, outside, darken, offset)
+            if inner:
+                out.append(item[1] + " {\n" + "\n".join(inner) + "\n}")
+    return out
+
+
 def emit(items, s):
     out = []
     for item in items:
@@ -282,7 +329,14 @@ def main():
     ap.add_argument("--exclude", action="append", default=[],
                     help="extra selector regex to leave unscaled (repeatable)")
     ap.add_argument("--darken-grays", type=float, default=0,
-                    help="with --full: multiply neutral dark grays by this factor")
+                    help="multiply neutral dark grays by this factor")
+    ap.add_argument("--gray-offset", type=int, default=0,
+                    help="with --darken-grays: then add this to each gray")
+    ap.add_argument("--scope", action="append", default=[],
+                    help="emit color properties under this ancestor (repeatable)")
+    ap.add_argument("--outside", default=r"(?!x)x",
+                    help="with --scope: regex of selectors that never occur "
+                         "inside the scopes (skipped)")
     args = ap.parse_args()
 
     global EXCLUDE
@@ -295,7 +349,13 @@ def main():
         with open(path, encoding="utf-8") as f:
             css = re.sub(r"/\*.*?\*/", "", f.read(), flags=re.S)
         items, _ = parse(css)
-        rules = emit_full(items, s, args.darken_grays) if args.full else emit(items, s)
+        if args.scope:
+            rules = emit_scoped(items, args.scope, re.compile(args.outside),
+                                args.darken_grays, args.gray_offset)
+        elif args.full:
+            rules = emit_full(items, s, args.darken_grays)
+        else:
+            rules = emit(items, s)
         chunks.append(f"/* from {path.rsplit('/', 1)[-1]} */\n" + "\n".join(rules))
 
     header = (

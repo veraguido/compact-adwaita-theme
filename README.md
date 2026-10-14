@@ -41,6 +41,7 @@ The light variant has only the padding changes.
 | Shell quick settings | ![](docs/screenshots/shell-stock-dark-quicksettings.png) | ![](docs/screenshots/shell-ggtk-dark-quicksettings.png) |
 | Shell calendar | ![](docs/screenshots/shell-stock-dark-datemenu.png) | ![](docs/screenshots/shell-ggtk-dark-datemenu.png) |
 | Shell, `ggtk` in light mode | | ![](docs/screenshots/shell-ggtk-light-quicksettings.png) |
+| Notification banner, `ggtk` in light mode | | ![](docs/screenshots/shell-ggtk-light-banner.png) |
 
 | libadwaita (light) | Menu |
 |---|---|
@@ -94,6 +95,11 @@ variants behave differently:
 
 GNOME Shell can't do both at once: its CSS has no way to switch colors by
 color scheme, and a theme stylesheet is a single fixed file.
+
+In **both** variants and both modes, popups and notification banners are
+near-black (`#121212`, like the Hardcore color scheme). That covers the
+calendar, quick settings, the Activities/app menus and right-click menus. With
+`ggtk` in light mode, the top bar stays light while its popups are dark.
 
 What the installer does:
 
@@ -168,12 +174,22 @@ stock theme. `ggtk-dark` is a complete stylesheet (`compact.py --full`) that
 also turns the shell's bluish grays into the darker neutral grays. Accent
 colors are untouched in both, so the shell follows the system accent.
 
+The dark popups come from `compact.py --scope`. It re-emits only the color
+properties of the stock *dark* stylesheet, under the containers that hold
+every popup (`.popup-menu-boxpointer`) and every notification banner
+(`#notification-container`). Its grays are shifted down so the popup
+background lands on `#121212`, and cards, toggles and borders keep the same
+contrast to it. Because the layer is scoped, the rest of a light shell stays
+light. `src/gnome-shell/popups.css` pins the final background and gives the
+banners the same border as the popups.
+
 ```
 src/gtk-3.0/colors-dark.css    darker palette (GTK3 @define-color)
 src/gtk-4.0/colors-dark.css    darker palette (libadwaita CSS variables)
 src/gtk-*/tweaks-dense.css     a few hand-tuned exceptions for the dense preset
 src/gnome-shell/tweaks-dense.css  same, for the shell (top bar height, quick
                                settings, calendar)
+src/gnome-shell/popups.css     popup / notification background (#121212)
 scripts/compact.py             the generator
 scripts/update-vendor.sh       refresh vendor/adw-gtk3 from a release
 vendor/adw-gtk3/               adw-gtk3 v6.5 release CSS + assets

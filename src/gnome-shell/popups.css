@@ -1,0 +1,12 @@
+/* Popups (menus, quick settings, calendar) and notification banners:
+ * near-black background like the Hardcore color scheme, in both the light
+ * and the dark shell. Everything inside them comes from the generated dark
+ * layer above, whose grays are shifted so contrast steps match the theme. */
+
+.popup-menu-boxpointer .popup-menu-content { background-color: #121212; border-color: #1e1e1e; }
+
+/* Banners match the popups: same background, border and corners. */
+#notification-container .notification-banner {
+  background-color: #121212;
+  border: 1px solid #1e1e1e;
+}
