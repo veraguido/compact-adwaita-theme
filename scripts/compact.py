@@ -35,6 +35,7 @@ PAD_PROPS = {
     # GNOME Shell (St)
     "spacing", "spacing-rows", "spacing-columns",
     "-natural-hpadding", "-minimum-hpadding",
+    "offset-y", "-y-offset",  # e.g. the running-app dot, sized to the padding
 }
 SIZE_PROPS = {"min-height", "min-width"}
 RADIUS_PROPS = {
